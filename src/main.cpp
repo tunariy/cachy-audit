@@ -29,11 +29,6 @@ namespace {
 
 }  // namespace
 
-/**
- * @brief Program entry point.
- * @return EXIT_SUCCESS on a completed scan (even when CVEs were found),
- *         EXIT_FAILURE on errors
- */
 int main() {
     try {
         const auto packages = collect_installed_packages();

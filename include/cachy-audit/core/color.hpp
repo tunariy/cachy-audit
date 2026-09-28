@@ -1,8 +1,3 @@
-/**
- * @file color.hpp
- * @brief ANSI escape codes, TTY detection and hyperlink helpers for the report.
- */
-
 #pragma once
 
 #include <cachy-audit/Package.hpp>
@@ -35,12 +30,18 @@ inline constexpr std::string_view BOLD_BRIGHT_RED{"\033[1;91m"};
                                                      bool enabled) noexcept {
     if (!enabled) return {};
     switch (sev) {
-        case SeverityLevel::Critical: return BOLD_BRIGHT_RED;
-        case SeverityLevel::High: return RED;
-        case SeverityLevel::Medium: return YELLOW;
-        case SeverityLevel::Low: return CYAN;
-        case SeverityLevel::None: return GREEN;
-        case SeverityLevel::Unknown: return GRAY;
+    case SeverityLevel::Critical:
+        return BOLD_BRIGHT_RED;
+    case SeverityLevel::High:
+        return RED;
+    case SeverityLevel::Medium:
+        return YELLOW;
+    case SeverityLevel::Low:
+        return CYAN;
+    case SeverityLevel::None:
+        return GREEN;
+    case SeverityLevel::Unknown:
+        return GRAY;
     }
     return {};
 }

@@ -8,8 +8,8 @@ severity-ranked report with CVSS scores and CVE links to the entries.
 
 - **Full system scan** — audits every package reported by `pacman -Q`
 - **Two data sources, picked automatically**
-  - Kernel packages (`linux-cachyos`, `linux-zen`, …) →
-    [OSV](https://osv.dev) (`Linux` ecosystem)
+  - Kernel packages (`linux-cachyos`, `linux-zen`, …) → the
+    [NVD](https://nvd.nist.gov) (CVE API, matched by kernel CPE)
   - Everything else → the
     [Arch Security Tracker](https://security.archlinux.org)
 - **CachyOS-aware filtering** — the Arch Security Tracker records the version
@@ -101,18 +101,30 @@ cachy-audit
 ## How it works
 
 1. **Collect** — `pacman -Q` output is parsed into `(name, version)` pairs.
-2. **Route** — packages are split: known kernel packages go to OSV (batched
-   `querybatch` requests, with pagination handled transparently), everything
-   else is matched locally against a single download of the Arch Security
-   Tracker issue dump.
+2. **Route** — packages are split: known kernel packages are matched against
+   the NVD CVE API by the running kernel's CPE (paginated at 2000 entries per
+   request), everything else is matched locally against a single download of
+   the Arch Security Tracker issue dump.
 3. **Filter** — AST findings are checked against your installed version with
    a libalpm-compatible `vercmp`; stale records are dropped (see above).
-4. **Score** — OSV severities arrive as CVSS v3.x vector strings; the base
+4. **Score** — NVD severities arrive as CVSS v3.x vector strings; the base
    score is computed per the official specification and mapped to the standard
    qualitative bands (Low / Medium / High / Critical).
 5. **Report** — findings are grouped per package, sorted worst-first, and
    printed with severity-colored badges and links.
 
+## Testing
+
+### Non-Kernel Package
+
+1. Setup a fresh cachy-os installation
+
+2. Downgraded to a version of `djvulibre` which has a known [vulnerability](https://)
+
+3. Ran `cachy-audit` and got ![alt text](./.github/image.png)
+
+### Kernel Package
+
 ## License
 
-Not yet decided — a `LICENSE` file will be added before the first release.
+- For licensing check out: [LICENSE](LICENSE)

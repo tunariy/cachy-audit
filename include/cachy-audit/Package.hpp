@@ -1,13 +1,6 @@
-/**
- * @file Package.hpp
- * @brief Core data model: packages, CVE findings and severity levels.
- */
-
 #pragma once
 
 #include <cachy-audit/core/consts.hpp>
-#include <cachy-audit/core/system.hpp>
-#include <cachy-audit/core/util.hpp>
 
 #include "nlohmann/json.hpp"
 
@@ -38,7 +31,8 @@ enum class SeverityLevel : std::uint8_t { Unknown, None, Low, Medium, High, Crit
     return SeverityLevel::Critical;
 }
 
-/** @brief Parses a severity name (case-insensitive), e.g. "High"; Unknown if unrecognized. */
+/** @brief Parses a severity name (case-insensitive), e.g. "High"; Unknown if
+ * unrecognized. */
 [[nodiscard]] inline SeverityLevel severity_from_string(std::string_view s) noexcept {
     for (const auto& [name, order] : internal::SEV_ORDER)
         if (name.size() == s.size() &&
@@ -53,12 +47,18 @@ enum class SeverityLevel : std::uint8_t { Unknown, None, Low, Medium, High, Crit
 /** @brief Human-readable name of a severity level, e.g. "Critical". */
 [[nodiscard]] inline std::string_view to_string(SeverityLevel sev) noexcept {
     switch (sev) {
-        case SeverityLevel::Critical: return "Critical";
-        case SeverityLevel::High: return "High";
-        case SeverityLevel::Medium: return "Medium";
-        case SeverityLevel::Low: return "Low";
-        case SeverityLevel::None: return "None";
-        case SeverityLevel::Unknown: return "Unknown";
+    case SeverityLevel::Critical:
+        return "Critical";
+    case SeverityLevel::High:
+        return "High";
+    case SeverityLevel::Medium:
+        return "Medium";
+    case SeverityLevel::Low:
+        return "Low";
+    case SeverityLevel::None:
+        return "None";
+    case SeverityLevel::Unknown:
+        return "Unknown";
     }
     return "Unknown";
 }
@@ -66,16 +66,16 @@ enum class SeverityLevel : std::uint8_t { Unknown, None, Low, Medium, High, Crit
 /** @brief An installed package as reported by pacman. */
 struct Package {
     std::string name;
-    std::string version;  /**< full version, [epoch:]upstream[-pkgrel] */
+    std::string version;
 };
 
 /** @brief A single CVE affecting a package. */
 struct CveFinding {
-    std::string m_Id;       /**< canonical CVE id, or the database-specific id */
+    std::string m_Id;
     std::string m_Summary;
-    std::string m_Source;   /**< database the finding came from ("OSV" / "AST") */
-    std::string m_Url;      /**< link to the CVE database entry */
-    float m_Score{-1.0F};   /**< CVSS base score; negative when unknown */
+    std::string m_Source;
+    std::string m_Url;
+    float m_Score{-1.0F};
     SeverityLevel m_Severity{SeverityLevel::Unknown};
 };
 
@@ -93,22 +93,6 @@ struct PackageFinding {
 /** @brief Convenience overload taking a Package. */
 [[nodiscard]] inline bool is_kernel_pkg(const Package& pkg) noexcept {
     return is_kernel_pkg(pkg.name);
-}
-
-/**
- * @brief OSV query payload for a package; kernels map to the "Kernel"/"Linux"
- *        ecosystem with the running kernel's version.
- */
-inline nlohmann::json payload(const Package& p) {
-    if (is_kernel_pkg(p)) {
-        return {{"package",
-                 {{"name", std::string{internal::KERNEL_OSV_NAME}},
-                  {"ecosystem", std::string{internal::KERNEL_ECOSYSTEM}}}},
-                {"version", internal::get_kernel_version()}};
-    }
-    return {{"package",
-             {{"name", p.name}, {"ecosystem", std::string{internal::ARCH_ECOSYSTEM}}}},
-            {"version", split_upstream_version(p.version)}};
 }
 
 }  // namespace cachy_audit

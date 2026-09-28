@@ -1,8 +1,3 @@
-/**
- * @file util.hpp
- * @brief Small string helpers for parsing pacman output and package versions.
- */
-
 #pragma once
 
 #include <string>
@@ -24,8 +19,7 @@ split_by_space(std::string_view str) {
 
 /** @brief Strips the pacman epoch and pkgrel: "1:2.14-1.1" -> "2.14". */
 [[nodiscard]] inline std::string split_upstream_version(std::string ver) {
-    if (const auto pos = ver.find(':'); pos != std::string::npos)
-        ver.erase(0, pos + 1);
+    if (const auto pos = ver.find(':'); pos != std::string::npos) ver.erase(0, pos + 1);
     if (const auto pos = ver.rfind('-'); pos != std::string::npos) ver.erase(pos);
     return ver;
 }
