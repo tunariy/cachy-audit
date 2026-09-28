@@ -5,6 +5,7 @@
 #include "cachy-audit/Package.hpp"
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace cachy_audit {
@@ -20,12 +21,8 @@ class CveQuerier {
     [[nodiscard]] std::vector<PackageFinding> query(const std::vector<Package>& pkgs);
 
   private:
-    /**
-     * @brief NVD results for the running kernel, shared by every installed
-     *        kernel package.
-     */
-    [[nodiscard]] std::vector<PackageFinding>
-    query_kernel(const std::vector<Package>& pkgs);
+    /** @brief All CVEs affecting one kernel version. */
+    [[nodiscard]] std::vector<CveFinding> kernel_cves(const std::string& version);
 
     /**
      * @brief AST results for the non-kernel packages, deduplicated by CVE id.
@@ -41,6 +38,21 @@ class CveQuerier {
 
     /** @brief English description of an NVD CVE entry. */
     [[nodiscard]] static std::string describe(const json& cve);
+
+    /**
+     * @brief Whether NVD marks the kernel itself as vulnerable in this CVE —
+     *        userland CVEs list the kernel as a non-vulnerable "runs on"
+     *        platform, which must not count.
+     */
+    [[nodiscard]] static bool affects_kernel(const json& cve, std::string_view version);
+
+    /**
+     * @brief Whether a version satisfies a cpeMatch entry's version range.
+     *        Ranges without an upper bound do not count — NVD rarely goes back
+     *        to close them once the kernel is patched, so they only say the
+     *        CVE predates the record, not that the version is still affected.
+     */
+    [[nodiscard]] static bool version_in_range(const json& match, std::string_view version);
 
     /**
      * @brief NVD carries CVSS metrics per version; takes the first v3.x

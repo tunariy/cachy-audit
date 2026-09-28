@@ -2,12 +2,19 @@
 
 #include "cachy-audit/Cvss.hpp"
 #include "cachy-audit/core/consts.hpp"
-#include "cachy-audit/core/system.hpp"
+#include "cachy-audit/core/util.hpp"
 #include "cachy-audit/core/vercmp.hpp"
 
 #include <algorithm>
+#include <condition_variable>
+#include <deque>
+#include <exception>
 #include <iterator>
+#include <memory>
+#include <mutex>
 #include <stdexcept>
+#include <thread>
+#include <unordered_map>
 #include <unordered_set>
 
 namespace cachy_audit {
@@ -28,21 +35,70 @@ std::vector<PackageFinding> CveQuerier::query(const std::vector<Package>& pkgs) 
                         std::back_inserter(arch_pkgs),
                         [](const Package& p) { return is_kernel_pkg(p); });
 
-    std::vector<PackageFinding> findings = query_kernel(kernel_pkgs);
-    auto arch = query_arch(arch_pkgs);
-    findings.insert(findings.end(), std::make_move_iterator(arch.begin()),
-                    std::make_move_iterator(arch.end()));
+    /** @brief Mailbox the kernel thread pushes findings into. */
+    struct KernelChannel {
+        std::mutex mtx{};
+        std::condition_variable cv{};
+        std::deque<PackageFinding> ready{};
+        std::exception_ptr error{};
+        std::size_t pending{0};
+    };
+    const auto channel = std::make_shared<KernelChannel>();
+    channel->pending = kernel_pkgs.size();
+
+    // NVD queries are rate-limited, so they run on a detached thread while the
+    // AST lookup happens here; findings are drained from the channel as they arrive
+    std::jthread{[this, channel, kernel_pkgs = std::move(kernel_pkgs)] {
+        std::unordered_map<std::string, std::vector<CveFinding>> cache{};
+        for (const auto& pkg : kernel_pkgs) {
+            PackageFinding pf{.m_Package = pkg};
+            try {
+                auto version = split_upstream_version(pkg.version);
+                auto [it, inserted] = cache.try_emplace(version);
+                if (inserted) it->second = kernel_cves(version);
+                pf.m_Findings = it->second;
+            } catch (...) {
+                std::lock_guard lock{channel->mtx};
+                channel->error = std::current_exception();
+                channel->pending = 0;
+                channel->cv.notify_all();
+                return;
+            }
+            {
+                std::lock_guard lock{channel->mtx};
+                channel->ready.push_back(std::move(pf));
+                --channel->pending;
+            }
+            channel->cv.notify_one();
+        }
+    }}.detach();
+
+    std::vector<PackageFinding> findings = query_arch(arch_pkgs);
+
+    for (;;) {
+        std::unique_lock lock{channel->mtx};
+        channel->cv.wait(lock,
+                         [&] { return !channel->ready.empty() || channel->pending == 0; });
+        while (!channel->ready.empty()) {
+            auto pf = std::move(channel->ready.front());
+            channel->ready.pop_front();
+            if (!pf.m_Findings.empty()) findings.push_back(std::move(pf));
+        }
+        if (channel->pending == 0) {
+            if (channel->error) std::rethrow_exception(channel->error);
+            break;
+        }
+    }
     return findings;
 }
 
-std::vector<PackageFinding> CveQuerier::query_kernel(const std::vector<Package>& pkgs) {
-    if (pkgs.empty()) return {};
-
-    const auto res = m_Nvd.query(internal::get_kernel_version());
+std::vector<CveFinding> CveQuerier::kernel_cves(const std::string& version) {
+    const auto res = m_Nvd.query(version);
     std::vector<CveFinding> cves{};
     for (const auto& cve : res.value("vulns", json::array())) {
         // NVD keeps rejected entries around; they are not real vulnerabilities
         if (detail::str_or(cve, "vulnStatus") == "Rejected") continue;
+        if (!affects_kernel(cve, version)) continue;
 
         const auto id = detail::str_or(cve, "id", "?");
         CveFinding finding{
@@ -54,13 +110,7 @@ std::vector<PackageFinding> CveQuerier::query_kernel(const std::vector<Package>&
         apply_nvd_metrics(cve, finding);
         cves.push_back(std::move(finding));
     }
-    if (cves.empty()) return {};
-
-    std::vector<PackageFinding> findings{};
-    findings.reserve(pkgs.size());
-    for (const auto& pkg : pkgs)
-        findings.push_back(PackageFinding{.m_Package = pkg, .m_Findings = cves});
-    return findings;
+    return cves;
 }
 
 std::vector<PackageFinding> CveQuerier::query_arch(const std::vector<Package>& pkgs) {
@@ -119,6 +169,48 @@ std::string CveQuerier::describe(const json& cve) {
         if (detail::str_or(d, "lang") == "en") return value;
     }
     return first;
+}
+
+bool CveQuerier::affects_kernel(const json& cve, std::string_view version) {
+    const auto configs = cve.find("configurations");
+    if (configs == cve.end() || !configs->is_array()) return false;
+
+    for (const auto& config : *configs)
+        for (const auto& node : config.value("nodes", json::array()))
+            for (const auto& match : node.value("cpeMatch", json::array())) {
+                if (!match.value("vulnerable", false)) continue;
+                if (!detail::str_or(match, "criteria")
+                         .starts_with(internal::NVD_KERNEL_CPE))
+                    continue;
+                if (version_in_range(match, version)) return true;
+            }
+    return false;
+}
+
+bool CveQuerier::version_in_range(const json& match, std::string_view version) {
+    // the version field of the CPE itself may already be an exact match
+    const auto criteria = detail::str_or(match, "criteria");
+    std::string_view exact{criteria};
+    exact.remove_prefix(internal::NVD_KERNEL_CPE.size());
+    exact = exact.substr(0, exact.find(':'));
+    if (exact != "*" && exact != "-" && !exact.empty() &&
+        alpm::vercmp(version, exact) == 0)
+        return true;
+
+    bool has_end = false;
+    const auto within = [&](const char* key, auto out_of_range, bool is_end) {
+        const auto bound = detail::str_or(match, key);
+        if (bound.empty()) return true;
+        has_end |= is_end;
+        return !out_of_range(alpm::vercmp(version, bound));
+    };
+    if (!within("versionStartIncluding", [](int c) { return c < 0; }, false) ||
+        !within("versionStartExcluding", [](int c) { return c <= 0; }, false) ||
+        !within("versionEndIncluding", [](int c) { return c > 0; }, true) ||
+        !within("versionEndExcluding", [](int c) { return c >= 0; }, true))
+        return false;
+
+    return has_end;
 }
 
 void CveQuerier::apply_nvd_metrics(const json& cve, CveFinding& out) {

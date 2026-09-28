@@ -101,12 +101,15 @@ cachy-audit
 ## How it works
 
 1. **Collect** — `pacman -Q` output is parsed into `(name, version)` pairs.
-2. **Route** — packages are split: known kernel packages are matched against
-   the NVD CVE API by the running kernel's CPE (paginated at 2000 entries per
-   request), everything else is matched locally against a single download of
-   the Arch Security Tracker issue dump.
+2. **Route** — packages are split: each installed kernel package is matched
+   against the NVD CVE API by its own version's CPE (paginated at 2000 entries
+   per request), everything else is matched locally against a single download
+   of the Arch Security Tracker issue dump.
 3. **Filter** — AST findings are checked against your installed version with
-   a libalpm-compatible `vercmp`; stale records are dropped (see above).
+   a libalpm-compatible `vercmp`; stale records are dropped (see above). NVD
+   findings only count when the kernel itself is marked vulnerable with a
+   bounded version range — userland CVEs that merely *run on* Linux and stale
+   ranges NVD never closed after the fix shipped are dropped.
 4. **Score** — NVD severities arrive as CVSS v3.x vector strings; the base
    score is computed per the official specification and mapped to the standard
    qualitative bands (Low / Medium / High / Critical).
