@@ -17,7 +17,7 @@ using json = nlohmann::json;
 class ASTClient {
   public:
     /**
-     * @brief Looks packages up in the issue dump (downloaded lazily on first call).
+     * @brief Looks packages up in the issue dump (downloaded lazily).
      * @return json array parallel to pkgs; an element is either null (no
      *         issues) or an object with an "issues" array of AST issue entries
      */
@@ -29,7 +29,7 @@ class ASTClient {
 
     network::Curl m_Curl{};
     json m_Dump{};
-    std::unordered_map<std::string, json> m_Index{}; /**< package -> issues */
+    std::unordered_map<std::string, json> m_Index{};
 };
 
 }  // namespace cachy_audit

@@ -27,13 +27,13 @@ severity-ranked report with CVSS scores and CVE links to the entries.
 
 ```console
 $ cachy-audit
-Scanning 1511 installed packages...
-
-grub 2:2.14-1.1 (2 CVEs · AST)
-  [HIGH    ]  -   CVE-2025-0624  heap-based buffer overflow
-  [MEDIUM  ]  -   CVE-2025-1118  information disclosure
-
-Summary: 1511 packages scanned, 1 vulnerable, 2 CVEs: 1 high, 1 medium
+Scanning 1533 installed packages...
+linux-cachyos-lts 6.18.52-1 (110 CVEs · NVD)
+  [CRITICAL] 9.9  CVE-2026-31501  In the Linux kernel, the following vulnerability has been resolved:  net: ti: icssg-prueth…
+  [CRITICAL] 9.9  CVE-2026-31589  In the Linux kernel, the following vulnerability has been resolved:  mm: call ->free_folio…
+  [CRITICAL] 9.9  CVE-2026-43414  In the Linux kernel, the following vulnerability has been resolved:  scsi: qla2xxx: Comple…
+  [CRITICAL] 9.9  CVE-2026-53260  In the Linux kernel, the following vulnerability has been resolved:  tcp: Add preempt_{dis…
+...
 ```
 
 A clean system reports:
@@ -82,21 +82,22 @@ No known vulnerabilities found (1512 packages scanned)
 - A C++20 compiler (GCC 13+ / Clang 17+)
 - `libcurl`
 
-## Building
+## How to Build
+
+- Build:
 
 ```console
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
+```
+
+- There are no flags — you just run it:
+
+```console
 ./build/src/cachy-audit
 ```
 
 ## Usage
-
-There are no flags — you just run it:
-
-```console
-cachy-audit
-```
 
 ## How it works
 
@@ -122,11 +123,17 @@ cachy-audit
 
 1. Setup a fresh cachy-os installation
 
-2. Downgraded to a version of `djvulibre` which has a known [vulnerability](https://)
+2. Downgraded to a version of `djvulibre` (3.5.28-6) which has a known [vulnerability](https://security.archlinux.org/CVE-2025-53367)
 
-3. Ran `cachy-audit` and got ![alt text](./.github/image.png)
+3. Ran `cachy-audit` and got ![alt text](.github/pck.png)
 
-### Kernel Package
+### Kernel
+
+1. Setup a fresh cachy-os installation
+
+2. Downgraded to `linux-cachyos 6.19.0-1.1`
+
+3. Ran `cachy-audit` and got ![alt text](.github/kernel.png)
 
 ## License
 

@@ -15,14 +15,13 @@ std::vector<std::string> exec(std::string_view cmd) {
     std::vector<std::string> lines;
     lines.reserve(10);
 
-    /** @brief Closes the pipe with pclose. */
-    struct PipeDeleter {
+    struct FPipeDeleter {
         void operator()(FILE* f) const {
             if (f != nullptr) pclose(f);
         }
     };
-    // popen needs a null-terminated string, string_view does not guarantee one
-    const std::unique_ptr<FILE, PipeDeleter> pipe{popen(std::string{cmd}.c_str(), "r")};
+
+    const std::unique_ptr<FILE, FPipeDeleter> pipe{popen(std::string{cmd}.c_str(), "r")};
 
     if (!pipe)
         throw std::runtime_error{std::string{"Failed to open a pipe to stdout: "} +

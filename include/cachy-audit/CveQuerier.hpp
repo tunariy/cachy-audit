@@ -52,7 +52,8 @@ class CveQuerier {
      *        to close them once the kernel is patched, so they only say the
      *        CVE predates the record, not that the version is still affected.
      */
-    [[nodiscard]] static bool version_in_range(const json& match, std::string_view version);
+    [[nodiscard]] static bool version_in_range(const json& match,
+                                               std::string_view version);
 
     /**
      * @brief NVD carries CVSS metrics per version; takes the first v3.x
@@ -60,8 +61,8 @@ class CveQuerier {
      */
     static void apply_nvd_metrics(const json& cve, CveFinding& out);
 
-    NVDClient m_Nvd{}; /**< kernel database */
-    ASTClient m_Ast{}; /**< everything else */
+    NVDClient m_Nvd{};
+    ASTClient m_Ast{};
 };
 
 }  // namespace cachy_audit

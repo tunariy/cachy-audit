@@ -35,9 +35,9 @@ namespace detail {
     /** @brief Flatten newlines and cap the length so one CVE always fits on one line. */
     [[nodiscard]] std::string tidy_summary(std::string text) {
         std::ranges::replace(text, '\n', ' ');
-        constexpr std::size_t max_len = 90;
-        if (text.size() > max_len) {
-            text.resize(max_len);
+        constexpr std::size_t magic_value{90};
+        if (text.size() > magic_value) {
+            text.resize(magic_value);
             text += "…";
         }
         return text;
@@ -64,7 +64,9 @@ void print_report(std::ostream& os, std::vector<PackageFinding> findings,
         return ra != rb ? ra > rb : a.m_Package.name < b.m_Package.name;
     });
 
-    std::array<std::size_t, 6> counts{};  // indexed by SeverityLevel value
+    constexpr auto SeverityLevelCount{6u};
+    std::array<std::size_t, SeverityLevelCount> counts{};
+
     std::size_t total_cves = 0;
 
     for (auto& pf : findings) {
@@ -80,11 +82,11 @@ void print_report(std::ostream& os, std::vector<PackageFinding> findings,
            << '\n';
 
         for (const auto& cve : pf.m_Findings) {
-            ++counts[static_cast<std::size_t>(cve.m_Severity)];
-            ++total_cves;
+            counts[static_cast<std::size_t>(cve.m_Severity)]++;
+            total_cves++;
 
             std::string badge = "[" + detail::upper(to_string(cve.m_Severity)) + "]";
-            badge.resize(sizeof "[CRITICAL]" - 1, ' ');
+            badge.resize(sizeof("[CRITICAL]") - 1, ' ');
 
             std::array<char, 8> score{};
             if (cve.m_Score >= 0.0F)

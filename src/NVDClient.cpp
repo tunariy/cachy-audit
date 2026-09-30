@@ -2,6 +2,7 @@
 
 #include "cachy-audit/core/consts.hpp"
 
+#include <cstddef>
 #include <stdexcept>
 #include <thread>
 
@@ -44,7 +45,7 @@ json NVDClient::fetch_page(const std::string& url) {
     network::Slist headers{};
     headers.append("User-Agent: " + std::string{internal::USER_AGENT});
 
-    for (int attempt = 0;; ++attempt) {
+    for (std::size_t attempt{0};; ++attempt) {
         pace();
         try {
             std::string post_fields;
