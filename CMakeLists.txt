@@ -8,6 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(CURL REQUIRED)
 
 include(GNUInstallDirs)
-install(TARGETS cachy-audit RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 add_subdirectory(src)
+
+install(TARGETS cachy-audit RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
