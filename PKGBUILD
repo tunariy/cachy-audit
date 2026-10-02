@@ -8,7 +8,7 @@ license=('MIT')
 depends=('curl' 'pacman' 'glibc' 'gcc-libs')
 makedepends=('cmake' 'nlohmann-json')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('d1bf2ce6f49d10d24bcdf371acf77799e19a558298b771795212a9610dc95d49')
+sha256sums=('b579a64dab67da9feb2dcbdffe5f5fe63549ed4efb6efd14d5d4435f53d6e545')
 
 build() {
   cmake -B build -S "$pkgname-$pkgver" -DCMAKE_BUILD_TYPE=Release
@@ -16,6 +16,6 @@ build() {
 }
 
 package() {
-  DESTDIR="$pkgdir" cmake --install "$pkgname-$pkgver/build"
+  DESTDIR="$pkgdir" cmake --install build
   install -Dm644 "$pkgname-$pkgver/LICENSE" -t "$pkgdir/usr/share/licenses/$pkgname/"
 }
