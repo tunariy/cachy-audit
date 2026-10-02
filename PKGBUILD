@@ -8,7 +8,7 @@ license=('MIT')
 depends=('curl' 'pacman' 'glibc' 'gcc-libs')
 makedepends=('cmake' 'nlohmann-json')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('...')
+sha256sums=('d1bf2ce6f49d10d24bcdf371acf77799e19a558298b771795212a9610dc95d49')
 
 build() {
   cmake -B build -S "$pkgname-$pkgver" -DCMAKE_BUILD_TYPE=Release
