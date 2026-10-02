@@ -17,7 +17,7 @@ std::vector<std::string> exec(std::string_view cmd) {
 
     struct FPipeDeleter {
         void operator()(FILE* f) const {
-            if (f != nullptr) pclose(f);
+            if (f) pclose(f);
         }
     };
 

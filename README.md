@@ -1,6 +1,6 @@
 # cachy-audit
 
-A fast, CachyOS-specific vulnerability auditor. `cachy-audit` scans
+A fast, CachyOS-specific package vulnerability auditor. `cachy-audit` scans
 every package installed on your system, queries public CVE databases, you get a
 severity-ranked report with CVSS scores and CVE links to the entries.
 
@@ -10,15 +10,12 @@ severity-ranked report with CVSS scores and CVE links to the entries.
 - **Two data sources, picked automatically**
   - Kernel packages (`linux-cachyos`, `linux-zen`, …) → the
     [NVD](https://nvd.nist.gov) (CVE API, matched by kernel CPE)
-  - Everything else → the
+  - Everything else goes to the
     [Arch Security Tracker](https://security.archlinux.org)
 - **CachyOS-aware filtering** — the Arch Security Tracker records the version
   that was current when an issue was filed and rarely updates it, while
-  CachyOS packages routinely run ahead of Arch's. Findings whose recorded
-  `affected` version is older than your installed version (or whose `fixed`
-  version you already have) are treated as stale and hidden, using a
-  libalpm-compatible version comparison — the same logic pacman uses
-- **Real CVSS scores** — parses CVSS v3.x vector strings
+  CachyOS packages routinely run ahead of Arch's.
+- **CVSS scores out of 10** — parses CVSS v3.x vector strings
   (`CVSS:3.1/AV:N/AC:L/...`) and computes the official base score
 - **Pretty terminal output** — severity-colored badges, packages sorted
   worst-first, OSC 8 clickable hyperlinks to the CVE database entries
@@ -39,7 +36,8 @@ linux-cachyos-lts 6.18.52-1 (110 CVEs · NVD)
 A clean system reports:
 
 ```console
-No known vulnerabilities found (1245 packages scanned)
+Scanning 1530 installed packages...
+No known vulnerabilities found (1530 packages scanned)
 ```
 
 ### vs. `arch-audit`
@@ -70,9 +68,8 @@ lua51 is affected by denial of service. Low risk!
 - `cachy-audit` does not display any
 
 ```txt
-Scanning 1512 installed packages...
-Retrieved 0 instances of vulnerabilities...
-No known vulnerabilities found (1512 packages scanned)
+Scanning 1530 installed packages...
+No known vulnerabilities found (1530 packages scanned)
 ```
 
 ## Requirements
@@ -119,6 +116,8 @@ cmake --build build
 
 ## Testing
 
+### Auditing
+
 ### Non-Kernel Package
 
 1. Setup a fresh cachy-os installation
@@ -134,6 +133,46 @@ cmake --build build
 2. Downgraded to `linux-cachyos 6.19.0-1.1`
 
 3. Ran `cachy-audit` and got ![alt text](.github/kernel.png)
+
+### Performance
+
+#### On a clean machine
+
+```console
+❯ time sudo cachy-audit
+[sudo] password for t:
+Scanning 1530 installed packages...
+No known vulnerabilities found (1530 packages scanned)
+sudo cachy-audit  0,03s user 0,01s system 0% cpu 4,670 total
+```
+
+#### On a system with bunch of vulnerabilities
+
+```console
+...
+mm: fix deferred spli..
+[MEDIUM] 4.7 CVE-2026-46298
+pseries/papr-hvpipe: .
+[MEDIUM] 4.7 CVE-2@26-530@08
+ice: fix race conditi..
+[MEDIUM] 4.7 CVE-2@26-53108
+powerpc/64s: Fix unma..
+[MEDIUM] 4.7 CVE-2@26-981@9
+Bluetooth: hci core: .
+djvulibre 3.5.28-6 (1 CVE - AST)
+[HIGH] - CVE-2@25-53367
+5ummary: 1198 packages scanned, 3
+“xecuted in 24.71 secs fish
+In the Linux kernel, the following vulnerability has been resolved
+In the Linux kernel, the following vulnerability has been resolved
+In the Linux kernel, the following vulnerability has been resolved
+In the Linux kernel, the following vulnerability has been resolved
+arbitrary code execution
+vulnerable, 2589 CVES, 165 critical, 1118 high, 13@5 medium, 1 lou
+external
+usr time 2.71 secs 0.09 micros 2 7isecs
+sys time 0.44 secs B48.00 micros 0.44 secs
+```
 
 ## License
 
