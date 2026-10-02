@@ -68,6 +68,7 @@ lua51 is affected by denial of service. Low risk!
 - `cachy-audit` does not display any
 
 ```txt
+> sudo cachy-audit
 Scanning 1530 installed packages...
 No known vulnerabilities found (1530 packages scanned)
 ```
@@ -150,28 +151,18 @@ sudo cachy-audit  0,03s user 0,01s system 0% cpu 4,670 total
 
 ```console
 ...
-mm: fix deferred spli..
-[MEDIUM] 4.7 CVE-2026-46298
-pseries/papr-hvpipe: .
-[MEDIUM] 4.7 CVE-2@26-530@08
-ice: fix race conditi..
-[MEDIUM] 4.7 CVE-2@26-53108
-powerpc/64s: Fix unma..
-[MEDIUM] 4.7 CVE-2@26-981@9
-Bluetooth: hci core: .
-djvulibre 3.5.28-6 (1 CVE - AST)
-[HIGH] - CVE-2@25-53367
-5ummary: 1198 packages scanned, 3
-“xecuted in 24.71 secs fish
-In the Linux kernel, the following vulnerability has been resolved
-In the Linux kernel, the following vulnerability has been resolved
-In the Linux kernel, the following vulnerability has been resolved
-In the Linux kernel, the following vulnerability has been resolved
-arbitrary code execution
-vulnerable, 2589 CVES, 165 critical, 1118 high, 13@5 medium, 1 lou
-external
-usr time 2.71 secs 0.09 micros 2 7isecs
-sys time 0.44 secs B48.00 micros 0.44 secs
+[MEDIUM]  4.7  CVE-2026-98109  In the Linux kernel, the following vulnerability has been resolved:  Bluetooth: hci_core: …
+
+djvulibre 3.5.28-6 (1 CVE · AST)
+  [HIGH]     -   CVE-2025-53367   arbitrary code execution
+
+Summary: 1198 packages scanned, 3 vulnerable, 2589 CVEs, 165 critical, 1118 high, 1305 medium, 1 low
+
+_________________________________________________________________
+
+Executed in   43.16 secs    fish           external
+   usr time   2.84 secs     0.00 micros    2.84 secs
+   sys time   0.72 secs     863.00 micros  0.72 secs
 ```
 
 ## License

@@ -13,7 +13,7 @@ inline constexpr std::string_view AST_API_LINK{
     "https://security.archlinux.org/issues/all.json"};
 /** @brief CPE 2.3 prefix of the Linux kernel; the version is appended to it. */
 inline constexpr std::string_view NVD_KERNEL_CPE{"cpe:2.3:o:linux:linux_kernel:"};
-inline constexpr std::string_view USER_AGENT{"cachy-audit/0.1"};
+inline constexpr std::string_view USER_AGENT{"cachy-audit/1.0.0"};
 
 /** @brief Base URLs for vulnerability pages (append the vuln/CVE id). */
 inline constexpr std::string_view NVD_CVE_LINK{"https://nvd.nist.gov/vuln/detail/"};
